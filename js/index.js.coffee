@@ -1,49 +1,58 @@
 jQuery ->
-  Home = {title: "Home", children: []}
-  Home.add_child = (node)->
-    node.parent = @
-    @children.push(node)
-    @
+  Home = 
+    template: Template.make("home")
+
+    title: "Home"
+
+    children: []
+
+    add_child: (node)->
+      node.parent = @
+      @children.push(node)
+      @
   
+  jQuery.extend Home, WithTemplate::
+
   class Node
+    jQuery.extend @::, WithTemplate::
+    template: Template.make("node")
+    collapse: true
+
     constructor: (params)->
       @children = []
-      @collapse = true
       @note = params.note
       @text = params.text
 
     add_child: (node)->
-      @parent = this
+      node.parent = this
       @children.push(node)
 
-    is_leaf: ()->
+    is_leaf: ->
       @children.length == 0
 
-    is_root: ()->
+    is_root: ->
       @parent == null
 
     path: ->
-      $node_path = [Home]
+      $node_path = []
       $node = @
       while($node != Home)
-        $node_path.push($node)
+        $node_path.unshift($node)
         $node = $node.parent
         
+      $node_path.unshift(Home)
       return $node_path
 
+  Page =
+    template: Template.make("page")
 
-      for child in @children
-        $node_path.unshift(child)
+    set_subject: (subject)->
+      @subject = subject
 
+    bread_crumbs: ->
+      @subject.path() if @subject.path
 
-      return $node_path
-
-  class Page
-    set_subject: ()->
-      this
-
-    bread_crumbs: ()->
-      node.path()
+  jQuery.extend Page, WithTemplate::
 
   jQuery.extend window,
     Home: Home

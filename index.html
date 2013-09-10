@@ -3,17 +3,22 @@
 <html>
 <head>
 <title>JS Workflow Tree</title>
+<meta charset="utf8">
 <link rel="stylesheet" type="text/css" href="./css/index.css"/>
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script type="text/coffeescript" src="./js/template.js.coffee"></script>
 <script type="text/coffeescript" src="./js/index.js.coffee"></script>
 <script type="text/javascript" src="./js/coffee-script.js"></script>
-<meta charset="utf8">
+<style>[class*="-template"] {display:none;}</style>
 </head>
 <body>
-  <div class="workflowy">
-    <div class="home">
-      <input type="text"/>
-    </div>
+<!--模板样例-->
+<div class="node-template">
+  <div class="node">
+    <h1>$[node.text]</h1>
+    <div class="children">$[node.children]</div>
   </div>
+</div>
+</div>
 </body>
 </html>
