@@ -1,8 +1,10 @@
 jQuery ->
   Home = 
-    template: Template.make("home")
+    template: Template.make(@)
 
     title: "Home"
+
+    type: "home"
 
     children: []
 
@@ -11,14 +13,12 @@ jQuery ->
       @children.push(node)
       @
   
-  jQuery.extend Home, WithTemplate::
-
   class Node
-    jQuery.extend @::, WithTemplate::
-    template: Template.make("node")
     collapse: true
+    type: "node"
 
     constructor: (params)->
+      @template = Template.make(@)
       @children = []
       @note = params.note
       @text = params.text
@@ -31,20 +31,22 @@ jQuery ->
       @children.length == 0
 
     is_root: ->
-      @parent == null
+      @parent == Home
 
     path: ->
-      $node_path = []
-      $node = @
+      node_path = []
+      node = @
       while($node != Home)
-        $node_path.unshift($node)
-        $node = $node.parent
+        node_path.unshift(node)
+        node = node.parent
         
-      $node_path.unshift(Home)
-      return $node_path
+      node_path.unshift(Home)
+      return node_path
 
   Page =
-    template: Template.make("page")
+    template: Template.make(@)
+
+    type: "page"
 
     set_subject: (subject)->
       @subject = subject
@@ -52,7 +54,8 @@ jQuery ->
     bread_crumbs: ->
       @subject.path() if @subject.path
 
-  jQuery.extend Page, WithTemplate::
+    class_name: ->
+      "page"
 
   jQuery.extend window,
     Home: Home

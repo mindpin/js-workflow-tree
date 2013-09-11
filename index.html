@@ -9,15 +9,16 @@
 <script type="text/coffeescript" src="./js/template.js.coffee"></script>
 <script type="text/coffeescript" src="./js/index.js.coffee"></script>
 <script type="text/javascript" src="./js/coffee-script.js"></script>
-<style>[class*="-template"] {display:none;}</style>
+<style>[data-template] {display:none;}</style>
 </head>
 <body>
 <!--模板样例-->
-<div class="node-template">
-  <div class="node">
-    <h1>$[node.text]</h1>
-    <div class="children">$[node.children]</div>
-  </div>
+<div data-template="node" class="node">
+  <h1>
+    <input type="text" data-jslot="text"/>
+  </h1>
+  <input type="text" data-jslot="note"/>
+  <div class="children" data-jcollection="children" data-jhide="collapse"></div>
 </div>
 </div>
 </body>
