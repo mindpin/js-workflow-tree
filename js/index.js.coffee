@@ -1,4 +1,10 @@
 jQuery ->
+  guid = ->
+    'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace /[xy]/g, (c)->
+      r = Math.random()*16|0
+      v = if c == 'x' then r else (r&0x3|0x8)
+      v.toString(16)
+
   Home = 
     template: Template.make(@)
 
@@ -13,15 +19,21 @@ jQuery ->
       @children.push(node)
       @
   
-  class Node
+  class WFNode
+    nodes = {}
     collapse: true
-    type: "node"
+    type: "wfnode"
 
     constructor: (params)->
+      @id = guid()
       @template = Template.make(@)
       @children = []
       @note = params.note
       @text = params.text
+      nodes[@id] = @
+
+    @find: (id)->
+      nodes[id]
 
     add_child: (node)->
       node.parent = this
@@ -49,6 +61,7 @@ jQuery ->
     type: "page"
 
     set_subject: (subject)->
+      @template.destroy() if @subject
       @subject = subject
 
     bread_crumbs: ->
@@ -56,5 +69,6 @@ jQuery ->
 
   jQuery.extend window,
     Home: Home
-    Node: Node
+    WFNode: WFNode
     Page: Page
+    guid: guid
