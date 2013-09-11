@@ -54,9 +54,6 @@ jQuery ->
     bread_crumbs: ->
       @subject.path() if @subject.path
 
-    class_name: ->
-      "page"
-
   jQuery.extend window,
     Home: Home
     Node: Node

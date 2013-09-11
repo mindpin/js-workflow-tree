@@ -5,8 +5,6 @@ jQuery.fn.is_tag = (tag_name)->
   @[0].tagName.toLowerCase() == tag_name.toLowerCase()
 
 class Template
-  re: /\$\[([\w\.\(\)]*)\]/g
-
   @make: (model)->
     new @(model)
 
@@ -33,6 +31,7 @@ class Template
       @model[field] = $el.val()
 
   unbind_events: ->
+    jQuery(@collections).off "collection_update"
     jQuery(@updateables).off "change"
 
   append_to: (selector)->
