@@ -6,8 +6,6 @@ jQuery ->
       v.toString(16)
 
   Home = 
-    template: Template.make(@)
-
     title: "Home"
 
     type: "home"
@@ -26,7 +24,6 @@ jQuery ->
 
     constructor: (params)->
       @id = guid()
-      @template = Template.make(@)
       @children = []
       @note = params.note
       @text = params.text
@@ -56,12 +53,9 @@ jQuery ->
       return node_path
 
   Page =
-    template: Template.make(@)
-
     type: "page"
 
     set_subject: (subject)->
-      @template.destroy() if @subject
       @subject = subject
 
     bread_crumbs: ->
