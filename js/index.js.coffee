@@ -5,7 +5,43 @@ jQuery ->
       v = if c == 'x' then r else (r&0x3|0x8)
       v.toString(16)
 
+  class JSONSerializable
+    toJSON: ->
+      @["#class"] = @constructor.name
+      @
+
+    defined_class: (v)->
+      typeof v      == "object" &&
+      v             != null     &&
+      v.constructor != Object   &&
+      v.constructor != Array
+
+    serialize: ->
+      cache = {}; counter = 0
+      JSON.stringify @, (k, v)=>
+        if @defined_class(v)
+          return {ref: v.ref_id} if v.ref_id
+          counter++
+          v.ref_id = "#{v.constructor.name}#{counter}"
+          cache[v.ref_id] = v
+        v
+
+    @deserialize: (json)->
+      cache = {}
+      JSON.parse json, (k, v)->
+        if @ref_id
+          cache[@ref_id] = @
+          delete @ref_id
+        return cache[v.ref] if v.ref
+        if @["#class"]
+          @.__proto__ = window[@["#class"]]::
+          delete @["#class"]
+        v
+
   class Tree
+    jQuery.extend @, JSONSerializable
+    jQuery.extend @::, JSONSerializable::
+
     trees = {}
     type: "tree"
     text: "Home"
@@ -22,9 +58,16 @@ jQuery ->
       node.parent = @
       node.tree = @
       @children.push(node)
+      last = @children[@children.length - 1]
+      if last
+        last.next = node
+        node.prev = last
       @
 
   class WFNode
+    jQuery.extend @, JSONSerializable
+    jQuery.extend @::, JSONSerializable::
+
     nodes = {}
     collapse: true
     type: "wfnode"
@@ -48,6 +91,24 @@ jQuery ->
     add_child: (node)->
       node.parent = this
       @children.push(node)
+      last = @children[@children.length - 1]
+      if last
+        last.next = node
+        node.prev = last
+      @
+
+    after: (node)->
+      index = @parent.children.indexOf(@) + 1
+      node.parent = @parent
+
+      if @next
+        node.prev = @
+        node.next = @next
+
+      @next.prev = node
+      @next = node
+
+      @parent.children.splice(index, 0, node)
 
     append_to: (node)->
       @parent = node
@@ -82,3 +143,4 @@ jQuery ->
     WFNode: WFNode
     Page: Page
     guid: guid
+    Tree: Tree
