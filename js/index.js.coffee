@@ -106,8 +106,8 @@ jQuery ->
       if @next
          @next.prev = node
          node.next = @next
-         @next = node
 
+      @next = node
       node.prev = @
 
       @parent.children.splice(index, 0, node)
