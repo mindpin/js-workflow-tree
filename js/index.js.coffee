@@ -5,7 +5,43 @@ jQuery ->
       v = if c == 'x' then r else (r&0x3|0x8)
       v.toString(16)
 
+  class JSONSerializable
+    toJSON: ->
+      @["#class"] = @constructor.name
+      @
+
+    defined_class: (v)->
+      typeof v      == "object" &&
+      v             != null     &&
+      v.constructor != Object   &&
+      v.constructor != Array
+
+    serialize: ->
+      cache = {}; counter = 0
+      JSON.stringify @, (k, v)=>
+        if @defined_class(v)
+          return {ref: v.ref_id} if v.ref_id
+          counter++
+          v.ref_id = "#{v.constructor.name}#{counter}"
+          cache[v.ref_id] = v
+        v
+
+    @deserialize: (json)->
+      cache = {}
+      JSON.parse json, (k, v)->
+        if @ref_id
+          cache[@ref_id] = @
+          delete @ref_id
+        return cache[v.ref] if v.ref
+        if @["#class"]
+          @.__proto__ = window[@["#class"]]::
+          delete @["#class"]
+        v
+
   class Tree
+    jQuery.extend @, JSONSerializable
+    jQuery.extend @::, JSONSerializable::
+
     trees = {}
     type: "tree"
     text: "Home"
@@ -25,6 +61,9 @@ jQuery ->
       @
 
   class WFNode
+    jQuery.extend @, JSONSerializable
+    jQuery.extend @::, JSONSerializable::
+
     nodes = {}
     collapse: true
     type: "wfnode"
@@ -82,3 +121,4 @@ jQuery ->
     WFNode: WFNode
     Page: Page
     guid: guid
+    Tree: Tree
