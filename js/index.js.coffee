@@ -18,8 +18,8 @@ jQuery ->
 
     serialize: ->
       cache = {}; counter = 0
-      clone = jQuery.extend(true, {}, @)
-      JSON.stringify clone, (k, v)=>
+      this_clone = jQuery.extend(true, {}, @)
+      JSON.stringify this_clone, (k, v)=>
         if @defined_class(v)
           return {ref: v.ref_id} if v.ref_id
           counter++
@@ -58,8 +58,8 @@ jQuery ->
     add_child: (node)->
       node.parent = @
       node.tree = @
-      @children.push(node)
       last = @children[@children.length - 1]
+      @children.push(node)
       if last
         last.next = node
         node.prev = last
