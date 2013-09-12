@@ -44,6 +44,10 @@ jQuery ->
       node.parent = this
       @children.push(node)
 
+    append_to: (node)->
+      @parent = node
+      node.children.push(this)
+
     is_leaf: ->
       @children.length == 0
 
