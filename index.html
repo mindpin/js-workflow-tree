@@ -1,28 +1,42 @@
-<!-- ruby -run -e httpd . -p 4000 -->
-<!DOCTYPE>
+<!DOCTYPE html>
 <html>
 <head>
-<title>JS Workflow Tree</title>
-<meta charset="utf8">
-<link rel="stylesheet" type="text/css" href="./css/index.css"/>
-<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-<script type="text/coffeescript" src="./js/template.js.coffee"></script>
-<script type="text/coffeescript" src="./js/index.js.coffee"></script>
-<script type="text/coffeescript" src="./js/controller.js.coffee"></script>
-<script type="text/javascript" src="./js/coffee-script.js"></script>
-<style>[data-jtemplate] {display:none;}</style>
+  <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+  <title>JS Workflow Tree</title>
+  <link href="ui/ui.css" media="screen" rel="stylesheet" type="text/css" />
 </head>
 <body>
-<!--模板样例-->
-<div data-jtemplate="wfnode" class="wfnode">
-  <h1>
-    <input type="text" data-jslot="text"/>
-  </h1>
-  <input type="text" data-jslot="note"/>
-  <div class="children" data-jcollection="children" data-jhide="collapse"></div>
-</div>
-<div data-jtemplate="home" class="home"></div>
-<div data-jtemplate="page" class="home"></div>
-</div>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+  <script type="text/javascript" src="js/coffee-script.js"></script>
+  <script type="text/coffeescript" src="js/index.js.coffee"></script>
+  <script type="text/coffeescript" src="js/controller.js.coffee"></script>
+  <script type="text/coffeescript" src="ui/ui.js.coffee"></script>
+  <script type="text/coffeescript">
+    if !localStorage.getItem('tree')
+      window.tree = new Tree
+
+      node = new WFNode {
+        text: 'testnode0'
+      }
+
+      node1 = new WFNode {
+        text: 'testnode1'
+      }
+
+      node2 = new WFNode {
+        text: 'testnode2'
+      }
+
+      node.add_child node1
+      node.add_child node2
+      tree.add_child node
+
+      localStorage.setItem('tree', tree)
+    else
+      window.tree = localStorage.getItem('tree')
+
+    ui = new WorkflowTreeUi(tree)
+    ui.render()
+  </script>
 </body>
 </html>

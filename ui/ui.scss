@@ -1,0 +1,48 @@
+body {
+  line-height:1.5em;
+  font-size:16px;
+  background-color:#F9F9FA;
+  padding:0;margin:0;
+  // font-family: Helvetica,Arial,sans-serif;
+}
+
+.workflow-tree-page {
+  margin:20px auto;
+  width:900px;
+  background-color:white;
+  border:solid 1px #e7e7e7;
+  min-height:900px;
+  padding:30px 40px;
+  position:relative;
+
+  .editor {
+    position:absolute;
+    overflow:hidden;
+    textarea {
+      resize:none;
+      border:0 none;
+      padding:0;margin:0;
+      height:100%;line-height:1.5em;
+      background-color:#eee;
+      background-color:rgba(#eee, 0.5);
+      // font-family: Helvetica,Arial,sans-serif;
+      font-size:16px;
+      width:100%;
+    }
+  }
+
+  .wfnode {
+    >.text {
+      cursor:text;
+    }
+
+    >.children {
+      padding-left:20px;
+    }
+
+    &.root {
+      >.text {color:red;display:none;}
+      >.children {padding-left:0;}
+    }
+  }
+}
