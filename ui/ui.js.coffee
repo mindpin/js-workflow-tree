@@ -14,6 +14,8 @@ class WorkflowTreeEditorUi
     @$elm.appendTo(@$page)
 
   focus_to: (node)->
+    @focus_node = node
+
     offset = node.node_ui.offset()
 
     @$elm.css
@@ -32,6 +34,21 @@ class WorkflowTreeEditorUi
       if @ui.editor != @
         @ui.change_editor()
 
+    @$textarea.on 'keydown', (evt)=>
+      # console.log "editor keydown #{evt.keyCode}"
+
+      if evt.keyCode == 13
+        evt.preventDefault()
+        @focus_node.node_ui.append_new_child()
+
+      if evt.keyCode == 38
+        # console.log '↑ down'
+        evt.preventDefault()
+
+      if evt.keyCode == 40
+        # console.log '↓ down'
+        evt.preventDefault()
+
 class WorkflowTreeNodeUi
   constructor: (@node)->
     @render()
@@ -40,6 +57,11 @@ class WorkflowTreeNodeUi
     @$elm = jQuery('<div></div>')
       .addClass('wfnode')
       .data('node', @node)
+
+    @$joint = jQuery('<div></div>')
+      .addClass('joint')
+      .html('•')
+      .appendTo(@$elm)
 
     @$text = jQuery('<div></div>')
       .addClass('text')
@@ -50,7 +72,9 @@ class WorkflowTreeNodeUi
       .addClass('children')
       .appendTo(@$elm)
       
-    if @node.parent
+    if @node.prev
+      @node.prev.node_ui.$elm.after(@$elm)
+    else if @node.parent
       @$elm.appendTo(@node.parent.node_ui.$children)
     else
       @$elm.addClass('root').appendTo(@node.tree_ui.$page)
@@ -65,11 +89,29 @@ class WorkflowTreeNodeUi
     editor.blur()
 
   offset: ->
-    @$elm.position()
+    pos = @$elm.position()
+    return {
+      left: pos.left + 24
+      top: pos.top
+    }
 
   height: ->
     @$text.height()
 
+  append_new_child: (text)->
+    new_node = new WFNode({
+      text: 'aaa'  
+    })
+    @node.after(new_node)
+
+    new_node.tree_ui = @node.tree_ui
+    new_node.node_ui = new WorkflowTreeNodeUi(new_node)
+
+    setTimeout =>
+      new_node.node_ui.focus()
+    , 1
+
+    @node.tree_ui.save()
 
 class WorkflowTreeUi
   constructor: (@tree)->
@@ -117,6 +159,10 @@ class WorkflowTreeUi
       $node = jQuery(this).closest('.wfnode')
       node = $node.data('node')
       node.node_ui.hover()
+
+  save: ->
+    console.log @tree.serialize
+    # window.localStorage.setItem('tree', @tree.serialize())
 
 jQuery.extend window,
   WorkflowTreeUi: WorkflowTreeUi

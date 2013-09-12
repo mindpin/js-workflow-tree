@@ -15,7 +15,8 @@ body {
   position: relative; }
   .workflow-tree-page .editor {
     position: absolute;
-    overflow: hidden; }
+    overflow: hidden;
+    z-index: 1; }
     .workflow-tree-page .editor textarea {
       resize: none;
       border: 0 none;
@@ -27,10 +28,28 @@ body {
       background-color: rgba(238, 238, 238, 0.5);
       font-size: 16px;
       width: 100%; }
+  .workflow-tree-page .wfnode > .joint {
+    width: 18px;
+    height: 18px;
+    color: #666;
+    font-size: 24px;
+    font-family: arial;
+    line-height: 19px;
+    text-indent: 5px;
+    z-index: 6;
+    height: 18px;
+    width: 18px;
+    background-color: transparent;
+    border-radius: 12px;
+    float: left;
+    margin-top: 4px; }
   .workflow-tree-page .wfnode > .text {
-    cursor: text; }
+    cursor: text;
+    margin-left: 24px; }
   .workflow-tree-page .wfnode > .children {
     padding-left: 20px; }
+  .workflow-tree-page .wfnode.root > .joint {
+    display: none; }
   .workflow-tree-page .wfnode.root > .text {
     color: red;
     display: none; }

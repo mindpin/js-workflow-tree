@@ -18,6 +18,7 @@ body {
   .editor {
     position:absolute;
     overflow:hidden;
+    z-index:1;
     textarea {
       resize:none;
       border:0 none;
@@ -32,8 +33,24 @@ body {
   }
 
   .wfnode {
+
+    >.joint {
+      width:18px;height:18px;
+      color:#666;
+      font-size:24px;
+      font-family:arial;
+      line-height:19px;
+      text-indent:5px;
+      z-index:6;
+      height:18px;width:18px;
+      background-color:transparent;
+      border-radius:12px;
+      float:left;
+      margin-top:4px;
+    }
     >.text {
       cursor:text;
+      margin-left:24px;
     }
 
     >.children {
@@ -41,6 +58,7 @@ body {
     }
 
     &.root {
+      >.joint {display:none;}
       >.text {color:red;display:none;}
       >.children {padding-left:0;}
     }

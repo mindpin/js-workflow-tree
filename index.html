@@ -30,10 +30,8 @@
       node.add_child node1
       node.add_child node2
       tree.add_child node
-
-      localStorage.setItem('tree', tree)
     else
-      window.tree = localStorage.getItem('tree')
+      window.tree = Tree.deserialize localStorage.getItem('tree')
 
     ui = new WorkflowTreeUi(tree)
     ui.render()

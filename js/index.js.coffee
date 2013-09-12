@@ -40,9 +40,6 @@ jQuery ->
         v
 
   class Tree
-    jQuery.extend @, JSONSerializable
-    jQuery.extend @::, JSONSerializable::
-
     trees = {}
     type: "tree"
     text: "Home"
@@ -65,10 +62,36 @@ jQuery ->
         node.prev = last
       @
 
-  class WFNode
-    jQuery.extend @, JSONSerializable
-    jQuery.extend @::, JSONSerializable::
+    serialize_obj: ->
+      return {
+        id: @id
+        text: @text
+        note: @note
+        children: @children.map (child)=> child.serialize_obj()
+      }
 
+    serialize: ->
+      JSON.stringify @serialize_obj()
+
+    @deserialize: (string)->
+      obj = JSON.parse(string)
+      tree = new Tree
+      @_deserialize_r(tree, obj)
+
+      return tree
+
+    @_deserialize_r: (node, obj)->
+      for obj_child in obj.children
+        node_child = new WFNode({
+          id: obj_child.id
+          text: obj_child.text
+          note: obj_child.note  
+        })
+
+        node.add_child node_child
+        @_deserialize_r node_child, obj_child
+
+  class WFNode
     nodes = {}
     collapse: true
     type: "wfnode"
@@ -131,6 +154,15 @@ jQuery ->
         
       node_path.unshift(Home)
       return node_path
+
+    serialize_obj: ->
+      # id, #text, #note, #children
+      return {
+        id: @id
+        text: @text
+        note: @note
+        children: @children.map (child)=> child.serialize_obj()
+      }
 
   Page =
     type: "page"
