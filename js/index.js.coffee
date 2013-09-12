@@ -70,7 +70,6 @@ jQuery ->
       @subject.path() if @subject.path
 
   jQuery.extend window,
-    Home: new Tree
     WFNode: WFNode
     Page: Page
     guid: guid
