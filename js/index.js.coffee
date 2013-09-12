@@ -40,6 +40,11 @@ jQuery ->
     @find: (id)->
       nodes[id]
 
+    remove: ->
+      return if !@parent
+      index = @parent.children.indexOf(this)
+      @parent.children.splice(index, 1)
+
     add_child: (node)->
       node.parent = this
       @children.push(node)
