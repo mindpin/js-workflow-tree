@@ -58,6 +58,10 @@ jQuery ->
       node.parent = @
       node.tree = @
       @children.push(node)
+      last = @children[@children.length - 1]
+      if last
+        last.next = node
+        node.prev = last
       @
 
   class WFNode
@@ -87,6 +91,24 @@ jQuery ->
     add_child: (node)->
       node.parent = this
       @children.push(node)
+      last = @children[@children.length - 1]
+      if last
+        last.next = node
+        node.prev = last
+      @
+
+    after: (node)->
+      index = @parent.children.indexOf(@) + 1
+      node.parent = @parent
+
+      if @next
+        node.prev = @
+        node.next = @next
+
+      @next.prev = node
+      @next = node
+
+      @parent.children.splice(index, 0, node)
 
     append_to: (node)->
       @parent = node
