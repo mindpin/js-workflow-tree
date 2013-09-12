@@ -5,18 +5,25 @@ jQuery ->
       v = if c == 'x' then r else (r&0x3|0x8)
       v.toString(16)
 
-  Home = 
-    title: "Home"
+  class Tree
+    trees = {}
+    type: "tree"
+    text: "Home"
 
-    type: "home"
+    constructor: ->
+      @id = guid()
+      @children = []
+      trees[@id] = @
 
-    children: []
+    @find: (id)->
+      trees[id]
 
     add_child: (node)->
       node.parent = @
+      node.tree = @
       @children.push(node)
       @
-  
+
   class WFNode
     nodes = {}
     collapse: true
@@ -27,6 +34,7 @@ jQuery ->
       @children = []
       @note = params.note
       @text = params.text
+      @tree = if parent.constructor == Tree then parent else parent.tree
       nodes[@id] = @
 
     @find: (id)->
@@ -40,12 +48,12 @@ jQuery ->
       @children.length == 0
 
     is_root: ->
-      @parent == Home
+      @parent.constructor == Tree
 
     path: ->
       node_path = []
       node = @
-      while($node != Home)
+      while($node.constructor != Tree)
         node_path.unshift(node)
         node = node.parent
         
@@ -62,7 +70,7 @@ jQuery ->
       @subject.path() if @subject.path
 
   jQuery.extend window,
-    Home: Home
+    Home: new Tree
     WFNode: WFNode
     Page: Page
     guid: guid
