@@ -53,14 +53,10 @@ jQuery ->
       trees[id]
 
     add_child: (node)->
-      node.parent = @
-      node.tree = @
-      last = @children[@children.length - 1]
-      @children.push(node)
-      if last
-        last.next = node
-        node.prev = last
-      @
+      node.append_to(@)
+
+    remove_child: (node)->
+      node.remove()
 
     serialize_obj: ->
       return {
@@ -109,17 +105,31 @@ jQuery ->
 
     remove: ->
       return if !@parent
-      index = @parent.children.indexOf(this)
+      index = @parent.children.indexOf(@)
+      @prev.next = @next if @prev
+      @next.prev = @prev if @next
+      @next = undefined
+      @prev = undefined
       @parent.children.splice(index, 1)
+      @parent = undefined
 
     add_child: (node)->
-      node.parent = this
-      last = @children[@children.length - 1]
-      @children.push(node)
-      if last
-        last.next = node
-        node.prev = last
-      @
+      node.append_to(@)
+
+    remove_child: (node)->
+      node.remove()
+
+    indent: ->
+      return if !@prev
+      new_parent = @prev
+      @remove()
+      @append_to(new_parent)
+
+    outdent: ->
+      return if !@parent || @is_base()
+      new_sibling = @parent
+      @remove()
+      @after(new_sibling)
 
     after: (node)->
       return if !@parent
@@ -135,14 +145,19 @@ jQuery ->
 
       @parent.children.splice(index, 0, node)
 
-    append_to: (node)->
-      @parent = node
-      node.children.push(this)
+    append_to: (parent)->
+      @parent = parent
+      last = @parent.children[@parent.children.length - 1]
+      @parent.children.push(@)
+      if last
+        last.next = @
+        @.prev = last
+      @
 
     is_leaf: ->
       @children.length == 0
 
-    is_root: ->
+    is_base: ->
       @parent.constructor == Tree
 
     path: ->
