@@ -131,11 +131,29 @@ jQuery ->
       @remove()
       @after(new_sibling)
 
-    after: (node)->
+    index: ->
+      @parent.children.indexOf(@)
+
+    before: (node)->
       return if !@parent
-      index = @parent.children.indexOf(@) + 1
+      index = @index()
       node.parent = @parent
 
+      if @prev
+         @prev.next = node
+         node.prev = @prev
+
+      @prev = node
+      node.next = @
+
+      @parent.children.splice(index, 0, node)
+
+    after: (node)->
+      return if !@parent
+      index =  @index() + 1 
+      node.parent = @parent
+
+      console.lg index
       if @next
          @next.prev = node
          node.next = @next
