@@ -120,16 +120,18 @@ jQuery ->
       node.remove()
 
     indent: ->
-      return if !@prev
+      return false if !@prev
       new_parent = @prev
       @remove()
       @append_to(new_parent)
+      true
 
     outdent: ->
-      return if !@parent || @is_base()
+      return false if !@parent || @is_base()
       new_sibling = @parent
       @remove()
       @after(new_sibling)
+      true
 
     index: ->
       @parent.children.indexOf(@)
