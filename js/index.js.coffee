@@ -127,10 +127,10 @@ jQuery ->
       true
 
     outdent: ->
-      return false if !@parent || @is_base()
+      return false if @is_base()
       new_sibling = @parent
       @remove()
-      @after(new_sibling)
+      new_sibling.after(@)
       true
 
     index: ->
@@ -155,7 +155,6 @@ jQuery ->
       index =  @index() + 1 
       node.parent = @parent
 
-      console.lg index
       if @next
          @next.prev = node
          node.next = @next
