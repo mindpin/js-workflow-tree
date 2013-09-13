@@ -119,6 +119,14 @@ jQuery ->
     remove_child: (node)->
       node.remove()
 
+    give_children: (node)->
+      return false if node.children.length > 0
+      node.children = @children
+      @children = []
+      node.children.forEach (child)=>
+        child.parent = node
+      true
+
     indent: ->
       return false if !@prev
       new_parent = @prev
