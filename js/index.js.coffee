@@ -58,6 +58,33 @@ jQuery ->
     remove_child: (node)->
       node.remove()
 
+    all_mentions: ->
+      @all_misc("mention")
+
+    all_tags: ->
+      @all_misc("tag")
+
+    all_misc: (what)->
+      @children
+        .reduce(((acc, child)-> acc.concat(child["all_#{what}s"]())), [])
+        .reduce(((acc, item)-> if acc.indexOf(item) == -1 then acc.concat([item]) else acc), [])
+
+    select_tag: (tag)->
+      @select_misc("tag", tag)
+
+    select_mention: (mention)->
+      @select_misc("mention", mention)
+
+    select_misc: (what, misc)->
+      return [] if ["tag", "mention"].indexOf(what) == -1
+      @children
+        .reduce((acc, child)=>
+          if child.has_misc(what, misc)
+            acc.concat([child]).concat(child.select_misc(what, misc))
+          else
+            acc.concat(child.select_misc(what, misc))
+        , [])
+
     serialize_obj: ->
       return {
         id: @id
@@ -89,11 +116,13 @@ jQuery ->
 
   class WFNode
     nodes = {}
-    collapse: true
+    collapsed: false
     type: "wfnode"
 
     constructor: (params)->
       @id = guid()
+      @mentions = []
+      @tags = []
       @children = []
       @note = params.note
       @text = params.text
@@ -126,6 +155,68 @@ jQuery ->
       node.children.forEach (child)=>
         child.parent = node
       true
+
+    clone_and_after: (node)->
+      node = @clone()
+      @after(node)
+
+    has_misc: (what, misc)->
+      return false if ["tag", "mention"].indexOf(what) == -1
+      @["#{what}s"].indexOf(misc) != -1
+
+    select_misc: (what, misc)->
+      return [] if ["tag", "mention"].indexOf(what) == -1
+      @children
+        .reduce((acc, child)=>
+          if child.has_misc(what, misc)
+            acc.concat([child]).concat(child.select_misc(what, misc))
+          else
+            acc.concat(child.select_misc(what, misc))
+        , [])
+
+    all_mentions: ->
+      @all_misc("mention")
+
+    all_tags: ->
+      @all_misc("tag")
+
+    all_misc: (what)->
+      @children.reduce((acc, child)->
+        acc.concat child["all_#{what}s"]()
+      , @["#{what}s"])
+
+    extract_misc: (misc_re, collection)->
+      matches = @extract_matches(misc_re)
+      @[collection] = matches
+
+    extract_matches: (re)->
+      matches = []
+      while match = re.exec(@text || "")
+        item = match[1]
+        continue if matches.indexOf(item) != -1
+        matches.push item
+      matches
+
+    set_text: (text)->
+      @text = text
+      @extract_misc(/(?:^|\s*)(@[\w]*)(?:\s*|$)/g, "mentions")
+      @extract_misc(/(?:^|\s*)(#[\w]*)(?:\s*|$)/g, "tags")
+      @text
+
+    clone: ->
+      node = new @constructor({})
+      for key, value of @
+        continue if key == "id"
+        if key == "children"
+          node.children = []
+          for child in @children
+            node.children << child.clone()
+        node[key] = value
+      node
+
+    is_hidden_by_ancestor: ->
+      return @parent.collapsed if @parent.is_base() || @parent.collapsed
+      @parent.is_hidden_by_ancestor()
 
     indent: ->
       return false if !@prev
