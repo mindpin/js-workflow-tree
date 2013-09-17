@@ -109,7 +109,8 @@ jQuery ->
         node_child = new WFNode({
           id: obj_child.id
           text: obj_child.text
-          note: obj_child.note  
+          note: obj_child.note
+          collapsed: obj_child.collapsed
         })
 
         node.add_child node_child
