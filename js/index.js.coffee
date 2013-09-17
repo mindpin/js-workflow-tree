@@ -90,6 +90,7 @@ jQuery ->
         id: @id
         text: @text
         note: @note
+        collapsed: @collapsed
         children: @children.map (child)=> child.serialize_obj()
       }
 
@@ -294,6 +295,7 @@ jQuery ->
         id: @id
         text: @text
         note: @note
+        collapsed: @collapsed
         children: @children.map (child)=> child.serialize_obj()
       }
 
