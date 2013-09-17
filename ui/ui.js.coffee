@@ -424,6 +424,7 @@ class WorkflowTreeNodeUi
       @save()
 
   expand: ->
+    return @node.collapsed = false if @node.is_leaf()
     @node.collapsed = false
     @node.node_ui.$children.slideDown(100)  
     @node.node_ui.focus(0) 
@@ -431,6 +432,7 @@ class WorkflowTreeNodeUi
     @save()
 
   collapse: ->
+    return @node.collapsed = false if @node.is_leaf()
     @node.collapsed = true
     @node.node_ui.$children.slideUp(100)
     @node.node_ui.focus(0)
