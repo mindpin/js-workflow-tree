@@ -33,6 +33,10 @@
   <script type="text/coffeescript" src="js/controller.js.coffee"></script>
   <script type="text/coffeescript" src="ui/ui.js.coffee"></script>
   <script type="text/coffeescript">
+    jQuery('a.reset-tree').on 'click', ->
+      localStorage.removeItem('tree')
+      window.location.reload()  
+
     jQuery ->
       if !localStorage.getItem('tree')
         window.tree = new Tree
@@ -53,14 +57,12 @@
         node.add_child node2
         tree.add_child node
       else
-        window.tree = Tree.deserialize localStorage.getItem('tree')
+        str = localStorage.getItem('tree')
+        #console.log str
+        window.tree = Tree.deserialize str
 
       ui = new WorkflowTreeUi(tree)
-      ui.render()
-
-      jQuery('a.reset-tree').on 'click', ->
-        localStorage.removeItem('tree')
-        window.location.reload()        
+      ui.render()      
 
   </script>
 </body>

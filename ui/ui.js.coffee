@@ -100,17 +100,12 @@ class WorkflowTreeEditorUi
       @focus_node.node_ui.show_control()
 
     @$textarea.on 'keydown', (evt)=>
-      # console.log "editor keydown #{evt.keyCode}"
-      # setTimeout =>
-      #   console.log @get_text_of_key_cursor()
-      # , 1
-      # enter
+
       if evt.keyCode == 13
         evt.preventDefault()
 
         t = @get_text_of_key_cursor()
-        @focus_node.node_ui.append_new_child t.after
-        @focus_node.node_ui.update_text t.before # 顺序不可颠倒
+        @focus_node.node_ui.append_new_child t.before, t.after
         setTimeout =>
           @set_key_cursor_pos(0)
         , 1
@@ -154,7 +149,7 @@ class WorkflowTreeEditorUi
 
   set_timer: ->
     setInterval =>
-      if @is_main
+      if @is_main && @focus_node
         @focus_node.node_ui.update_text(@$textarea.val())
     , 100
 
@@ -234,7 +229,11 @@ class WorkflowTreeNodeUi
     @$children = jQuery('<div></div>')
       .addClass('children')
       .appendTo(@$elm)
-      
+
+    if @node.collapsed
+      @$children.hide()
+      @$elm.addClass('collapsed')
+    
     if @node.next && @node.next.node_ui
       @node.next.node_ui.$elm.before(@$elm)
     else if @node.prev
@@ -272,9 +271,10 @@ class WorkflowTreeNodeUi
     @$text.height()
 
   # 当前子树最后一个叶子节点
+  # 需要考虑折叠的情况
   last_leaf_node: ->
+    return @node if @node.is_leaf() || @node.collapsed
     children = @node.children
-    return @node if children.length == 0
     children[children.length - 1].node_ui.last_leaf_node()
 
   # 下一个子树的第一个节点
@@ -289,14 +289,16 @@ class WorkflowTreeNodeUi
     return @node.next.node_ui if @node.next
 
   # 视觉上的上一个节点
+  # 折起来的节点不考虑
   visible_up_node: ->
     return @prev_ui().last_leaf_node() if @node.prev
     return @node.parent if !@node.is_base()
 
   # 视觉上的下一个节点
+  # 折起来的节点不考虑
   visible_down_node: ->
-    return @node.children[0] if @node.children.length > 0
-    return @next_tree_first_node()
+    return @next_tree_first_node() if @node.is_leaf() || @node.collapsed
+    return @node.children[0]
 
   focus_up: (pos)->
     @visible_up_node().node_ui.focus(pos) if @visible_up_node()
@@ -304,32 +306,43 @@ class WorkflowTreeNodeUi
   focus_down: (pos)->
     @visible_down_node().node_ui.focus(pos) if @visible_down_node()
 
-  append_new_child: (text)->
+  append_new_child: (before_text, after_text)->
     new_node = new WFNode({
-      text: text
+      text: after_text
     })
 
     # 三种情况：
-    # 第一种情况，node有子节点，before_text为空
-    #   向下添加兄弟节点
-    # 第二种情况，node有子节点，before_text不为空
-    #   向目前的第一个子节点添加 prev 节点
-    # 第三种情况，node没有子节点
-    #   无论怎样都是添加兄弟节点
+    # 第1种情况，node没有子节点，或node被折叠
+    #   向上添加相邻兄弟节点
 
-    if @node.children.length > 0
-      if text == @node.text
-        @node.after(new_node)
+    # 第2种情况，node有子节点， after_text 不为空
+    #   向上添加相邻兄弟节点
+    
+    # 第3种情况，node有子节点， after_text 为空
+    #   向目前的第一个子节点添加 prev 节点
+
+    if @node.is_leaf() || @node.collapsed
+      @node.before(new_node)
+      new_node.text = before_text
+      @node.node_ui.update_text(after_text)
+      focus_node = @node
+
+    else 
+      if after_text.length > 0
+        @node.before(new_node)
+        new_node.text = before_text
+        @node.node_ui.update_text(after_text)
+        focus_node = @node
+
       else
         @node.children[0].before(new_node)
-    else
-      @node.after(new_node)
+        focus_node = new_node
 
     new_node.tree_ui = @node.tree_ui
     new_node.node_ui = new WorkflowTreeNodeUi(new_node)
 
     setTimeout =>
-      new_node.node_ui.focus()
+      focus_node.node_ui.focus(0)
     , 1
 
     @save()
@@ -406,14 +419,17 @@ class WorkflowTreeNodeUi
 
   expand: ->
     @node.collapsed = false
-    @node.node_ui.$children.slideDown(100)    
+    @node.node_ui.$children.slideDown(100)  
+    @node.node_ui.focus(0) 
     @$elm.removeClass('collapsed')
+    @save()
 
   collapse: ->
     @node.collapsed = true
     @node.node_ui.$children.slideUp(100)
-    @node.node_ui.focus()
+    @node.node_ui.focus(0)
     @$elm.addClass('collapsed')
+    @save()
 
   remove: ->
     @$elm.remove()
@@ -432,11 +448,11 @@ class WorkflowTreeUi
     @build_control()
     @build_nodes()
 
+    @bind_events()
+
     @tree.children[0].node_ui.focus()
     # @tree.children[0].node_ui.hover()
     @hover_editor.focus_to(@tree.children[0])
-
-    @bind_events()
 
   build_page: ->
     if !@$page
@@ -457,7 +473,6 @@ class WorkflowTreeUi
   build_nodes: ->
     if @tree.children.length == 0
       @tree.add_child new WFNode({})
-
     @_build_r(@tree)
 
   _build_r: (node)->
