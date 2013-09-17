@@ -106,19 +106,21 @@ jQuery ->
 
     @_deserialize_r: (node, obj)->
       for obj_child in obj.children
-        node_child = jQuery.extend({}, obj_child)
-        node_child.children = []
-        node_child.__proto__ = WFNode.prototype
+        node_child           = new WFNode({})
+        node_child.id        = obj_child.id
+        node_child.text      = obj_child.text
+        node_child.note      = obj_child.note
+        node_child.collapsed = obj_child.collapsed
         node.add_child node_child
         @_deserialize_r node_child, obj_child
 
   class WFNode
     nodes = {}
-    collapsed: false
     type: "wfnode"
 
     constructor: (params)->
       @id = guid()
+      @collapsed = false
       @mentions = []
       @tags = []
       @children = []
