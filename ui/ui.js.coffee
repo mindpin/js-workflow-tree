@@ -1,8 +1,58 @@
+class WorkflowTreeControlUi
+  constructor: (@ui)->
+    @$page = @ui.$page
+    @render()
+    @bind_events()
+
+  render: ->
+    @$elm = jQuery('<div></div>')
+      .addClass('controls')
+      .hide()
+
+    @$expand_btn = jQuery('<div></div>')
+      .addClass('expand-btn')
+      .prop('draggable', false)
+      .appendTo(@$elm)
+
+  bind_events: ->
+    @$expand_btn.on 'click', =>
+      if @node.collapsed
+        @$expand_btn.removeClass('plus').addClass('minus')
+        @node.node_ui.expand()
+      else
+        @$expand_btn.addClass('plus').removeClass('minus')
+        @node.node_ui.collapse()
+
+  show_on: (@node)->
+    # console.log @node.text, @node.is_leaf()
+
+    if node.is_leaf()
+      @hide()
+    else
+      if @node.collapsed
+        @$expand_btn.addClass('plus').removeClass('minus')
+      else
+        @$expand_btn.removeClass('plus').addClass('minus')
+
+      @$elm.appendTo(@node.node_ui.$name).show()
+
+  hide: ->
+    @$elm.hide()
+
 class WorkflowTreeEditorUi
   constructor: (@ui)->
     @$page = @ui.$page
     @render()
     @bind_events()
+    @set_timer()
+
+  set_main_focus: (bool)->
+    if bool
+      @is_main = true
+      @$elm.addClass 'focus'
+    else
+      @is_main = false
+      @$elm.removeClass 'focus'
 
   render: ->
     @$elm = jQuery('<div></div>')
@@ -13,41 +63,146 @@ class WorkflowTreeEditorUi
 
     @$elm.appendTo(@$page)
 
-  focus_to: (node)->
+  focus_to: (node, pos)->
     @focus_node = node
 
     offset = node.node_ui.offset()
 
     @$elm.css
-      left: offset.left
+      left: offset.left + 30
       top: offset.top
       right: 40
       height: node.node_ui.height()
 
+    if @focus_node.is_base()
+      @$elm.addClass('base')
+    else
+      @$elm.removeClass('base')
+
     @$textarea.val(node.text)
+
+    if typeof(pos) == 'number'
+      if pos == -1
+        @set_key_cursor_pos(node.text.length)
+      else
+        @set_key_cursor_pos(pos)
+
 
   blur: ->
     @$textarea.blur()
 
   bind_events: ->
     @$textarea.on 'focus', =>
-      if @ui.editor != @
+      if @ui.focus_editor != @
         @ui.change_editor()
+
+    @$textarea.on 'mouseover', =>
+      @focus_node.node_ui.show_control()
 
     @$textarea.on 'keydown', (evt)=>
       # console.log "editor keydown #{evt.keyCode}"
-
+      # setTimeout =>
+      #   console.log @get_text_of_key_cursor()
+      # , 1
+      # enter
       if evt.keyCode == 13
         evt.preventDefault()
-        @focus_node.node_ui.append_new_child()
 
+        t = @get_text_of_key_cursor()
+        @focus_node.node_ui.append_new_child t.after
+        @focus_node.node_ui.update_text t.before # 顺序不可颠倒
+        setTimeout =>
+          @set_key_cursor_pos(0)
+        , 1
+
+      # backspace
+      if evt.keyCode == 8
+        t = @get_text_of_key_cursor()
+        if t.before == ''
+          @focus_node.node_ui.back_remove t.after
+
+      # ↑
       if evt.keyCode == 38
-        # console.log '↑ down'
         evt.preventDefault()
+        @focus_node.node_ui.focus_up(0)
 
+      # ↓
       if evt.keyCode == 40
-        # console.log '↓ down'
         evt.preventDefault()
+        @focus_node.node_ui.focus_down(0)
+
+      # ←
+      if evt.keyCode == 37
+        if @caret() == 0
+          evt.preventDefault()
+          @focus_node.node_ui.focus_up(-1)
+
+      # →
+      if evt.keyCode == 39
+        if @caret() == @focus_node.text.length
+          evt.preventDefault()
+          @focus_node.node_ui.focus_down(0)
+
+      # tab
+      if evt.keyCode == 9
+        if evt.shiftKey
+          evt.preventDefault()
+          @focus_node.node_ui.tab_outdent()
+        else
+          evt.preventDefault()
+          @focus_node.node_ui.tab_indent()
+
+  set_timer: ->
+    setInterval =>
+      if @is_main
+        @focus_node.node_ui.update_text(@$textarea.val())
+    , 100
+
+  # 取得输入光标在框里的位置
+  caret: ->
+    node = @$textarea[0]
+
+    if node.selectionStart 
+      return node.selectionStart
+
+    else if(!document.selection) 
+      return 0
+
+    c    = "\u0001"
+    sel  = document.selection.createRange()
+    txt  = sel.text
+    dul  = sel.duplicate()
+    len  = 0
+
+    try
+      dul.moveToElementText(node)
+    catch e
+      return 0
+
+    sel.text = txt + c
+    len = dul.text.indexOf(c)
+    sel.moveStart('character', -1)
+    sel.text = ""
+    return len
+
+  get_text_of_key_cursor: ->
+    return {
+      before: @$textarea.val()[0...@caret()]
+      after: @$textarea.val()[@caret()..-1]
+    }
+
+  set_key_cursor_pos: (pos)->
+    node = @$textarea[0]
+
+    if node.setSelectionRange
+      node.setSelectionRange pos, pos
+
+    else if node.createTextRange
+      range = node.createTextRange()
+      range.collapse(true)
+      range.moveEnd('character', pos)
+      range.moveStart('character', pos)
+      range.select()
 
 class WorkflowTreeNodeUi
   constructor: (@node)->
@@ -58,35 +213,53 @@ class WorkflowTreeNodeUi
       .addClass('wfnode')
       .data('node', @node)
 
+    @$name = jQuery('<div></div>')
+      .addClass('name')
+      .appendTo(@$elm)
+
     @$joint = jQuery('<div></div>')
       .addClass('joint')
       .html('•')
-      .appendTo(@$elm)
+      .appendTo(@$name)
 
     @$text = jQuery('<div></div>')
       .addClass('text')
       .html(@node.text)
-      .appendTo(@$elm)
+      .appendTo(@$name)
+
+    @$arrow = jQuery('<div></div>')
+      .addClass('arrow')
+      .appendTo(@$name)
 
     @$children = jQuery('<div></div>')
       .addClass('children')
       .appendTo(@$elm)
       
-    if @node.prev
+    if @node.next && @node.next.node_ui
+      @node.next.node_ui.$elm.before(@$elm)
+    else if @node.prev
       @node.prev.node_ui.$elm.after(@$elm)
     else if @node.parent
       @$elm.appendTo(@node.parent.node_ui.$children)
     else
       @$elm.addClass('root').appendTo(@node.tree_ui.$page)
 
-  focus: ->
-    editor = @node.tree_ui.editor
-    editor.focus_to(@node)
+  focus: (pos)->
+    editor = @node.tree_ui.focus_editor
+    editor.focus_to(@node, pos)
 
   hover: ->
     editor = @node.tree_ui.hover_editor
     editor.focus_to(@node)
     editor.blur()
+
+  show_control: ->
+    control = @node.tree_ui.control
+    control.show_on(@node)
+
+  hide_control: ->
+    control = @node.tree_ui.control
+    control.hide()
 
   offset: ->
     pos = @$elm.position()
@@ -98,11 +271,59 @@ class WorkflowTreeNodeUi
   height: ->
     @$text.height()
 
+  # 当前子树最后一个叶子节点
+  last_leaf_node: ->
+    children = @node.children
+    return @node if children.length == 0
+    children[children.length - 1].node_ui.last_leaf_node()
+
+  # 下一个子树的第一个节点
+  next_tree_first_node: ->
+    return @node.next if @node.next
+    return @node.parent.node_ui.next_tree_first_node() if !@node.is_base()
+
+  prev_ui: ->
+    return @node.prev.node_ui if @node.prev
+
+  next_ui: ->
+    return @node.next.node_ui if @node.next
+
+  # 视觉上的上一个节点
+  visible_up_node: ->
+    return @prev_ui().last_leaf_node() if @node.prev
+    return @node.parent if !@node.is_base()
+
+  # 视觉上的下一个节点
+  visible_down_node: ->
+    return @node.children[0] if @node.children.length > 0
+    return @next_tree_first_node()
+
+  focus_up: (pos)->
+    @visible_up_node().node_ui.focus(pos) if @visible_up_node()
+
+  focus_down: (pos)->
+    @visible_down_node().node_ui.focus(pos) if @visible_down_node()
+
   append_new_child: (text)->
     new_node = new WFNode({
-      text: 'aaa'  
+      text: text
     })
-    @node.after(new_node)
+
+    # 三种情况：
+    # 第一种情况，node有子节点，before_text为空
+    #   向下添加兄弟节点
+    # 第二种情况，node有子节点，before_text不为空
+    #   向目前的第一个子节点添加 prev 节点
+    # 第三种情况，node没有子节点
+    #   无论怎样都是添加兄弟节点
+
+    if @node.children.length > 0
+      if text == @node.text
+        @node.after(new_node)
+      else
+        @node.children[0].before(new_node)
+    else
+      @node.after(new_node)
 
     new_node.tree_ui = @node.tree_ui
     new_node.node_ui = new WorkflowTreeNodeUi(new_node)
@@ -111,6 +332,95 @@ class WorkflowTreeNodeUi
       new_node.node_ui.focus()
     , 1
 
+    @save()
+
+  back_remove: (text)->
+    # 多情况：
+    # 第一种情况，node有prev，prev是叶子
+    #   将 prev.text + text 赋值给当前节点，移除prev
+    # 第二种情况，node有prev，prev不是叶子
+    #   如果 node.text == '' 且 node 是叶子，移除当前node，聚焦 visible_up_node
+    #   否则什么都不做
+    # 第三种情况，node有parent
+    #   如果 node.text == '' 且 node 是叶子，移除当前node，聚焦 node.parent
+    #   否则什么都不做
+
+    if @node.prev 
+      if @node.prev.is_leaf()
+        pos = @node.prev.text.length
+        @update_text("#{@node.prev.text}#{text}")
+        @node.prev.node_ui.remove()
+        focus_node = @node
+      else
+        if @node.text == '' && @node.is_leaf()
+          focus_node = @visible_up_node()
+          pos = focus_node.text.length
+          @remove()
+        else
+          return false
+    else if !@node.is_base()
+      if @node.text == '' && @node.is_leaf()
+        focus_node = @node.parent
+        pos = focus_node.text.length
+        @remove()
+      else
+        return false
+    else
+      return false
+
+
+    setTimeout =>
+      focus_node.node_ui.focus(pos)
+    , 1
+
+    @save()
+
+  tab_indent: ->
+    if @node.indent()
+      @$elm.appendTo(@node.parent.node_ui.$children)
+
+      setTimeout =>
+        @focus()
+      , 1
+
+      @save()
+
+  tab_outdent: ->
+    if @node.outdent()
+      @node.prev.node_ui.$elm.after(@$elm)
+
+      setTimeout =>
+        @focus()
+      , 1
+
+      @save()
+
+  _change_parent: ->
+
+
+  update_text: (text)->
+    if @node.text != text
+      @node.text = text
+      @$text.html(text)
+      @save()
+
+  expand: ->
+    @node.collapsed = false
+    @node.node_ui.$children.slideDown(100)    
+    @$elm.removeClass('collapsed')
+
+  collapse: ->
+    @node.collapsed = true
+    @node.node_ui.$children.slideUp(100)
+    @node.node_ui.focus()
+    @$elm.addClass('collapsed')
+
+  remove: ->
+    @$elm.remove()
+    @node.remove()
+    @save()
+
+  save: ->
     @node.tree_ui.save()
 
 class WorkflowTreeUi
@@ -119,10 +429,12 @@ class WorkflowTreeUi
   render: ->
     @build_page()
     @build_editor()
+    @build_control()
     @build_nodes()
 
     @tree.children[0].node_ui.focus()
-    @tree.children[0].node_ui.hover()
+    # @tree.children[0].node_ui.hover()
+    @hover_editor.focus_to(@tree.children[0])
 
     @bind_events()
 
@@ -133,9 +445,14 @@ class WorkflowTreeUi
         .prependTo(jQuery('body'))
 
   build_editor: ->
-    if !@editor
-      @editor = new WorkflowTreeEditorUi(@)
+    if !@focus_editor
+      @focus_editor = new WorkflowTreeEditorUi(@)
       @hover_editor = new WorkflowTreeEditorUi(@)
+      @focus_editor.set_main_focus(true)
+
+  build_control: ->
+    if !@control
+      @control = new WorkflowTreeControlUi(@)
 
   build_nodes: ->
     if @tree.children.length == 0
@@ -150,19 +467,28 @@ class WorkflowTreeUi
       @_build_r(child)
 
   change_editor: ->
-    e = @editor
-    @editor = @hover_editor
+    e = @focus_editor
+    @focus_editor = @hover_editor
     @hover_editor = e
 
+    @focus_editor.set_main_focus(true)
+    @hover_editor.set_main_focus(false)
+
   bind_events: ->
-    @$page.delegate '.wfnode .text', 'mouseover', ->
+    @$page.delegate '.wfnode .name', 'mouseenter', ->
       $node = jQuery(this).closest('.wfnode')
       node = $node.data('node')
       node.node_ui.hover()
+      node.node_ui.show_control()
+
+    @$page.delegate '.wfnode .name', 'mouseleave', ->
+      $node = jQuery(this).closest('.wfnode')
+      node = $node.data('node')
+      node.node_ui.hide_control()
 
   save: ->
-    console.log @tree.serialize
-    # window.localStorage.setItem('tree', @tree.serialize())
+    # console.log @tree.serialize()
+    window.localStorage.setItem('tree', @tree.serialize())
 
 jQuery.extend window,
   WorkflowTreeUi: WorkflowTreeUi

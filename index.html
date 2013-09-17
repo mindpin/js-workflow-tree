@@ -6,35 +6,62 @@
   <link href="ui/ui.css" media="screen" rel="stylesheet" type="text/css" />
 </head>
 <body>
+  <a class='reset-tree' href='javascript:;'>重置数据</a>
+  <div class='page-help'>
+    <p>ver 0.01</p>
+    <p>按键说明：</p>
+    <p>
+      ↑ ↓ ← → : 移动光标<br/>
+      回车: 添加新节点<br/>
+      tab: 增加缩进<br/>
+      shift + tab: 减少缩进<br/>
+    </p>
+    <p>
+      TODO:<br/>
+      节点折叠还没做<br/>
+      节点顺序调整还没做<br/>
+      TAG还没做<br/>
+      多级导航还没做<br/>
+      浮动菜单还没做<br/>
+      节点备注还没做<br/>
+    </p>
+  </div>
+
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
   <script type="text/javascript" src="js/coffee-script.js"></script>
   <script type="text/coffeescript" src="js/index.js.coffee"></script>
   <script type="text/coffeescript" src="js/controller.js.coffee"></script>
   <script type="text/coffeescript" src="ui/ui.js.coffee"></script>
   <script type="text/coffeescript">
-    if !localStorage.getItem('tree')
-      window.tree = new Tree
+    jQuery ->
+      if !localStorage.getItem('tree')
+        window.tree = new Tree
 
-      node = new WFNode {
-        text: 'testnode0'
-      }
+        node = new WFNode {
+          text: '我是根节点'
+        }
 
-      node1 = new WFNode {
-        text: 'testnode1'
-      }
+        node1 = new WFNode {
+          text: 'node1'
+        }
 
-      node2 = new WFNode {
-        text: 'testnode2'
-      }
+        node2 = new WFNode {
+          text: 'node2'
+        }
 
-      node.add_child node1
-      node.add_child node2
-      tree.add_child node
-    else
-      window.tree = Tree.deserialize localStorage.getItem('tree')
+        node.add_child node1
+        node.add_child node2
+        tree.add_child node
+      else
+        window.tree = Tree.deserialize localStorage.getItem('tree')
 
-    ui = new WorkflowTreeUi(tree)
-    ui.render()
+      ui = new WorkflowTreeUi(tree)
+      ui.render()
+
+      jQuery('a.reset-tree').on 'click', ->
+        localStorage.removeItem('tree')
+        window.location.reload()        
+
   </script>
 </body>
 </html>
