@@ -119,12 +119,18 @@ class WorkflowTreeEditorUi
       # ↑
       if evt.keyCode == 38
         evt.preventDefault()
-        @focus_node.node_ui.focus_up(0)
+        if evt.ctrlKey
+          @focus_node.node_ui.collapse()
+        else
+          @focus_node.node_ui.focus_up(0)
 
       # ↓
       if evt.keyCode == 40
         evt.preventDefault()
-        @focus_node.node_ui.focus_down(0)
+        if evt.ctrlKey
+          @focus_node.node_ui.expand()
+        else
+          @focus_node.node_ui.focus_down(0)
 
       # ←
       if evt.keyCode == 37
@@ -317,7 +323,7 @@ class WorkflowTreeNodeUi
 
     # 第2种情况，node有子节点， after_text 不为空
     #   向上添加相邻兄弟节点
-    
+
     # 第3种情况，node有子节点， after_text 为空
     #   向目前的第一个子节点添加 prev 节点
 
