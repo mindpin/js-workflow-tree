@@ -106,9 +106,11 @@ jQuery ->
 
     @_deserialize_r: (node, obj)->
       for obj_child in obj.children
-        obj_child.__proto__ = WFNode.prototype
-        node.add_child obj_child
-        @_deserialize_r obj_child, obj_child
+        node_child = jQuery.extend({}, obj_child)
+        node_child.children = []
+        node_child.__proto__ = WFNode.prototype
+        node.add_child node_child
+        @_deserialize_r node_child, obj_child
 
   class WFNode
     nodes = {}
